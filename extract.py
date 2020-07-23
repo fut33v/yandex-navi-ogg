@@ -1,7 +1,7 @@
 import re
+import os
+import sys
 
-with open('ru_optimus', 'rb') as f:
-    bytes_arr = f.read()
 
 
 OGGS_HEADER = "OggS".encode()
@@ -44,27 +44,40 @@ def find_ogg_in_range(start, end, fname):
             end_index = match.span()[0] + 27 + total_segments + segments_len
 
             ogg_file = bytes_arr[start_index:end_index]
-            with open(fname, 'wb') as f:
+            with open(os.path.join(FOLDER_NAME, fname), 'wb') as f:
                 f.write(ogg_file)
 
 
-file_names = []
-for match in re.finditer('ru_optimus/.*?\.ogg'.encode(), bytes_arr, re.DOTALL):
-    fname = match.group().decode()
-    index = match.span()[1]
-    file_names.append((fname, index))
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        exit(-1)
 
-print(file_names)
+    ogg_binary_fname = sys.argv[1]
 
-for i in range(0, len(file_names)):
-    fname = file_names[i][0].split('/')[1]
-    start = file_names[i][1]
-    if i == len(file_names)-1:
-        end = len(bytes_arr)
-    else:
-        end = file_names[i+1][1]
+    FOLDER_NAME = ogg_binary_fname + '_ogg'
+    if not os.path.exists(FOLDER_NAME):
+        os.mkdir(FOLDER_NAME)
 
-    find_ogg_in_range(start, end, fname)
+    with open(ogg_binary_fname, 'rb') as f:
+        bytes_arr = f.read()
+
+    file_names = []
+    for match in re.finditer((ogg_binary_fname+'/.*?\.ogg').encode(), bytes_arr, re.DOTALL):
+        fname = match.group().decode()
+        index = match.span()[1]
+        file_names.append((fname, index))
+
+    print(file_names)
+
+    for i in range(0, len(file_names)):
+        fname = os.path.basename(file_names[i][0])
+        start = file_names[i][1]
+        if i == len(file_names)-1:
+            end = len(bytes_arr)
+        else:
+            end = file_names[i+1][1]
+
+        find_ogg_in_range(start, end, fname)
 
 
 
